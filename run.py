@@ -121,7 +121,7 @@ while True:
 # ---------------------------------------------------------------------
 print(f"\n{Y}[*] အဆင့် (၃): Local Router Gateway ဆီသို့ လိုင်းဖွင့်ရန် တောင်းဆိုနေသည်...{W}")
 r_url = f"http://{gw}:2060/wifidog/auth"
-params = {'token': token_val, 'phoneNumber': phone_val, 'mac': mac_address}
+params = {'token': token_val, 'phoneNumber': phone_val}
 
 try:
     router_res = ss.get(r_url, params=params, headers={'Upgrade-Insecure-Requests': '1'}, timeout=5)

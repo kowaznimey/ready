@@ -1,22 +1,24 @@
-import requests, socket, time, os
+import requests
+import socket
+import time
+import os
+import base64
 from urllib.parse import urlparse, parse_qs
 
 # ANSI Color UI Elements
 G, Y, R, C, M, B, W = '\033[92m', '\033[93m', '\033[91m', '\033[96m', '\033[95m', '\033[1m', '\033[0m'
 F_TXT = "voucher_history.txt"
 
-# 🌟 Core Hex Dump (100% တိကျသော မူရင်းလင့်ခ်စာသား)
-HEX_RAW = (
-    "68747470733a2f2f706f7274616c2d61732e7275696a69656e6574776f726b732e636f6d"
-    "2f6170692f617574682f77696669646f673f73746167653d706f7274616c2667775f6964"
-    "3d6334373061623765613164352667775f736e3d47315430343452303032303042266777"
-    "5f616464726573733d3139322e3136382e3131302e312667775f706f72743d3230363026"
-    "69703d3139322e3136382e3131302e33266d61633d64383a63353a33353a34343a33343a"
-    "33313263736c6f745f6e756d3d30366e617369703d3139322e3136382e312e3134332673"
-    "7369643d564c414e32MzM2dXN0YXRlPTA2bWFjX3JlcT0wNnVybD1odHRwcyUzQSUyRiUyRm"
-    "l2NDElaWNhbmhhemlyUWNvbSUyRjZjaGFwX2lkPSU1QzAwMTZjaGFwX2NoYWxsZW5nZT0lNUM"
-    "yNjYlNUMzNzQlNUMyNDQlNUMxMjUlNUMzMDElNUMyNDIlNUMzNjQlNUMzNTQlNUMwNzUlNUMz"
-    "NzUlNUMyMTclNUMxNzUlNUMzMTQlNUMxNTElNUMxNTElNUMzMDE="
+# 🌟 Encoded Portal URL (လင့်ခ်ကို မမြင်ရအောင် အုပ်ထားပါသည်)
+B64_DATA = (
+    "aHR0cHM6Ly9wb3J0YWwtYXMucnVpamllbmV0d29ya3MuY29tL2FwaS9hdXRoL3dpZmlkb2c/"
+    "c3RhZ2U9cG9ydGFsJmd3X2lkPWM0NzBhYjdlYTFkNSZnd19zbj1HMVQwNDRSMDAyMDBCJmd3"
+    "X2FkZHJlc3M9MTkyLjE2OC4xMTAuMSZnd19wb3J0PTIwNjAmaXA9MTkyLjE2OC4xMTAuMyZt"
+    "YWM9ZDg6Y2U6M2E6ZGQ6Y2Q6MWYmc2xvdF9udW09MDZuYXNpcD0xOTIuMTY4LjEuMTQzJnNz"
+    "aWQ9VkxBTjIzMyZ1c3RhdGU9MDZtYWNfcmVxPTA2dXJsPWh0dHBzJTNBJTJGJTJGaXB2NCUy"
+    "RWljYW5oYXppclFjb20lMkYmY2hhcF9pZD0lNUMwMDEmY2hhcF9jaGFsbGVuZ2U9JTVDMjY2"
+    "JTVDMzc0JTVDMjQ0JTVDMTI1JTVDMzAxJTVDMjQyJTVDMzY0JTVDMzU0JTVDMDc1JTVDMzc1"
+    "JTVDMjE3JTVDMTc1JTVDMzE0JTVDMTUxJTVDMTUxJTVDMzAx"
 )
 
 def print_banner():
@@ -33,41 +35,43 @@ def get_gw():
         ip = s.getsockname()[0].split('.')
         ip[-1] = '1'
         return '.'.join(ip)
-    except: return "10.0.0.1"
+    except: 
+        return "192.168.60.1"
 
 print_banner()
 gw = get_gw()
 print(f"{G}[+] စနစ်မှ ဖမ်းယူရရှိသည့် Wi-Fi Gateway IP: {B}{gw}{W}")
 
+# နောက်ကွယ်တွင် URL အား ပုံမှန်ပြန်ဖြည်ခြင်း
 try:
-    clean_hex = HEX_RAW.replace("MzM2","323333").replace("MTAz","MTQz").replace("MTU1","MTUx").replace("MTU0","MTU0")
-    init_url = bytes.fromhex(clean_hex).decode('utf-8')
-except:
-    init_url = "Https://portal-as.ruijienetworks.com/api/auth/wifidog?stage=portal&gw_id=c470ab7ea1d5&gw_sn=G1T044R00200B&gw_address=192.168.110.1&gw_port=2060&ip=192.168.110.3&mac=d8:ce:3a:dd:cd:1f&slot_num=0&nasip=192.168.1.143&ssid=VLAN233&ustate=0&mac_req=0&url=https%3A%2F%2Fipv4%2Eicanhazip%2Ecom%2F&chap_id=%5C001&chap_challenge=%5C266%5C374%5C244%5C125%5C301%5C242%5C364%5C354%5C075%5C375%5C217%5C175%5C314%5C151%5C151%5C301"
+    init_url = base64.b64decode(B64_DATA).decode('utf-8')
+except Exception as e:
+    print(f"{R}[!] URL decode ပြုလုပ်၍ မရပါ- {e}{W}")
+    init_url = ""
 
-mac_address = parse_qs(urlparse(init_url).query).get('mac', ['d8:ce:3a:dd:cd:1f'])[0]
+try:
+    mac_address = parse_qs(urlparse(init_url).query).get('mac', ['d8:ce:3a:dd:cd:1f'])[0]
+except:
+    mac_address = 'd8:ce:3a:dd:cd:1f'
+
 ss = requests.Session()
 ss.headers.update({'User-Agent': 'Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36', 'Connection': 'keep-alive'})
 
 # ---------------------------------------------------------------------
-# အဆင့် (၁) - ⚡ allow_redirects=False စနစ်ဖြင့် Instant Session ID ဖမ်းခြင်း
+# အဆင့် (၁) - Session ID ဖမ်းခြင်း
 # ---------------------------------------------------------------------
 print(f"\n{Y}[*] အဆင့် (၁): Redirect URL ထဲမှ Session Data များ စစ်ဆေးနေသည်...{W}")
 try:
-    # allow_redirects=False ကြောင့် ဝက်ဘ်စာမျက်နှာကို လှမ်းမဒေါင်းတော့ဘဲ Redirect Header သီးသန့်ကိုပဲ ချက်ချင်းဖမ်းယူသည်
-    resp = ss.get(init_url, allow_redirects=False, timeout=4)
-    
-    # HTTP 302 Redirect Location သို့မဟုတ် ပုံမှန် 200 URL ကို စိစစ်သည်
+    resp = ss.get(init_url, allow_redirects=False, timeout=5)
     redirect_url = resp.headers.get('Location', resp.url)
     sid = parse_qs(urlparse(redirect_url).query).get('sessionId', [None])[0]
     
     if not sid:
-        # အကယ်၍ တိုက်ရိုက် Page ပွင့်သွားပါက ဒုတိယအကြိမ် စမ်းသပ်ချက်အဖြစ် ခေါ်ယူခြင်း
-        with ss.get(init_url, allow_redirects=True, stream=True, timeout=4) as r:
+        with ss.get(init_url, allow_redirects=True, stream=True, timeout=5) as r:
             sid = parse_qs(urlparse(r.url).query).get('sessionId', [None])[0]
 
     if not sid:
-        raise ValueError("Session ID could not be parsed from response headers.")
+        raise ValueError("Session ID ကို Link ထဲမှ ရှာမတွေ့ပါ။")
         
     print(f"{G} ├── {B}Session ID:{W} {C}{sid}{W}")
     print(f"{G} └── {B}MAC Address:{W} {C}{mac_address}{W}")
@@ -107,7 +111,7 @@ while True:
             phone_val = p_parsed.get('phoneNumber', [v_in])[0]
             break
         else:
-            print(f"{R}[❌] Ngreinn pal khan r thm: Voucher code is invalid or session expired.{W}")
+            print(f"{R}[❌] Voucher ကုဒ် မှားယွင်းနေသည် သို့မဟုတ် Session သက်တမ်းကုန်ဆုံးသွားပါပြီ။{W}")
             if old_v == v_in and os.path.exists(F_TXT): os.remove(F_TXT); old_v = None
     except Exception as e:
         print(f"{R}[!] Network Request Error: {e}{W}")
@@ -160,3 +164,4 @@ except KeyboardInterrupt:
     print(f"\n\n{R}[-] Heartbeat Loop အား အသုံးပြုသူမှ ရပ်တန့်လိုက်ပါပြီ။{W}\n")
 except Exception as e:
     print(f"{R}[!] Router Error: {e}{W}")
+
